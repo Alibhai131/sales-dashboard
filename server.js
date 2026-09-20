@@ -7,21 +7,21 @@ const connectDB = require('./config/db.js');
 dotenv.config();
 const app = express();
 
-// Middleware
+// Connect Database
+connectDB();
+
+// Body Parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Path resolution for Vercel
-const publicPath = path.join(__dirname, 'public');
-const viewsPath = path.join(__dirname, 'views');
-
-app.use(express.static(publicPath));
+// Absolute paths for Vercel Serverless environment
+app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
-app.set('views', viewsPath);
+app.set('views', path.join(__dirname, 'views'));
 
-// Session (Standard memory store for now)
+// Session Configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'secretkey',
+    secret: process.env.SESSION_SECRET || 'sales_dashboard_session_secret_2024',
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 24 * 60 * 60 * 1000 }
@@ -39,18 +39,20 @@ app.use('/settings', require('./routes/settingsRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 app.use('/api', require('./routes/apiRoutes'));
 
-// Connect to DB on every request (Vercel best practice)
-app.use(async (req, res, next) => {
-    await connectDB();
-    next();
-});
-
+// Root redirect
 app.get('/', (req, res) => {
-    if (req.session.user) {
+    if (req.session && req.session.user) {
         res.redirect('/dashboard');
     } else {
         res.redirect('/auth/login');
     }
 });
 
+// Run local listener only outside production
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 Local Server running on http://localhost:${PORT}`));
+}
+
+// Export express app for Vercel
 module.exports = app;
