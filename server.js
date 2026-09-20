@@ -40,12 +40,13 @@ app.use('/admin', require('./routes/adminRoutes'));
 app.use('/api', require('./routes/apiRoutes'));
 
 app.get('/', (req, res) => {
-    if (req.session.user) {
-        res.redirect('/dashboard');
-    } else {
-        res.redirect('/auth/login');
-    }
+    res.redirect('/auth/login');
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Sales Dashboard live at http://localhost:${PORT}`));
+// Export app for Vercel Serverless environment
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 Sales Dashboard live at http://localhost:${PORT}`));
+}
+
+module.exports = app;
