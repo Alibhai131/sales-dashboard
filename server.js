@@ -11,13 +11,10 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Vercel Serverless EJS Views & Static Files Configuration
-const viewsPath = path.join(process.cwd(), 'views');
-const publicPath = path.join(process.cwd(), 'public');
-
-app.set('views', viewsPath);
+// EJS & Views Path Fix for Vercel
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(express.static(publicPath));
 
 // Express Session
 app.use(session({
@@ -29,8 +26,13 @@ app.use(session({
 
 // Middleware to ensure DB connection per request
 app.use(async (req, res, next) => {
-    await connectDB();
-    next();
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error('DB Middleware Error:', err);
+        res.status(500).send('Database Connection Error');
+    }
 });
 
 // Routes
@@ -45,19 +47,18 @@ app.use('/settings', require('./routes/settingsRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 app.use('/api', require('./routes/apiRoutes'));
 
-// Home Route
+// Root redirect
 app.get('/', (req, res) => {
     if (req.session && req.session.user) {
-        res.redirect('/dashboard');
-    } else {
-        res.redirect('/auth/login');
+        return res.redirect('/dashboard');
     }
+    res.redirect('/auth/login');
 });
 
 // Local listener
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Running locally on http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log(`🚀 Running on http://localhost:${PORT}`));
 }
 
 module.exports = app;

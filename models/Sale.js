@@ -19,4 +19,4 @@ const saleSchema = new mongoose.Schema({
     paymentStatus: { type: String, enum: ['Paid', 'Pending', 'Due'], default: 'Paid' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Sale', saleSchema);
+module.exports = mongoose.models.Sale || mongoose.model('Sale', saleSchema);

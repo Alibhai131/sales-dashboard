@@ -10,4 +10,4 @@ const employeeSchema = new mongoose.Schema({
     totalSalesAmount: { type: Number, default: 0 }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Employee', employeeSchema);
+module.exports = mongoose.models.Employee || mongoose.model('Employee', employeeSchema);
