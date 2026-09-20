@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Sales Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-card {
+            background: var(--color-white);
+            padding: 1.5rem;
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--box-shadow);
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="grid-template-columns: 14rem auto;">
+        <aside id="aside-bar">
+            <div class="top">
+                <div class="logo"><i class="fa-solid fa-chart-line primary" style="font-size:1.6rem;"></i><h2>SALES<span class="danger">PRO</span></h2></div>
+                <div class="close" id="close-btn"><i class="fa-solid fa-xmark"></i></div>
+            </div>
+            <div class="sidebar">
+                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
+                <a href="/employees"><i class="fa-solid fa-users"></i><h3>Workers</h3></a>
+                <a href="/analytics" class="active"><i class="fa-solid fa-chart-line"></i><h3>Analytics</h3></a>
+                <a href="/products"><i class="fa-solid fa-box-open"></i><h3>Products</h3></a>
+                <a href="/reports"><i class="fa-solid fa-file-invoice"></i><h3>PDF Reports</h3></a>
+                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
+            </div>
+        </aside>
+
+        <main>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h1>Sales Analytics <%= year %></h1>
+                <button id="menu-btn" style="display:none; background:transparent; cursor:pointer;"><i class="fa-solid fa-bars"></i></button>
+            </div>
+
+            <!-- MAIN LINE CHART -->
+            <div class="chart-card">
+                <h2><i class="fa-solid fa-chart-line primary"></i> Sales, Investment & Profit Trend (<%= year %>)</h2>
+                <canvas id="salesChart" style="margin-top:1rem; max-height:400px;"></canvas>
+            </div>
+
+            <!-- PROFIT LINE CHART -->
+            <div class="chart-card">
+                <h2><i class="fa-solid fa-arrow-trend-up success"></i> Monthly Profit Growth</h2>
+                <canvas id="profitChart" style="margin-top:1rem; max-height:300px;"></canvas>
+            </div>
+
+            <!-- TOP PRODUCTS -->
+            <div class="recent-orders">
+                <h2>Top 5 Best-Selling Products</h2>
+                <table>
+                    <thead>
+                        <tr><th>Rank</th><th>Product</th><th>Units Sold</th><th>Revenue</th></tr>
+                    </thead>
+                    <tbody>
+                        <% if(topProducts && topProducts.length > 0) { %>
+                            <% topProducts.forEach((p, i) => { %>
+                                <tr>
+                                    <td><b>#<%= i+1 %></b></td>
+                                    <td><%= p.name %></td>
+                                    <td><%= p.count %> units</td>
+                                    <td class="success"><b><%= user.currency %> <%= p.revenue.toLocaleString() %></b></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr><td colspan="4">No sales data available yet.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const data = <%- monthlyData %>;
+
+        // Main Multi-Line Chart
+        new Chart(document.getElementById('salesChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { label: 'Total Sales', data: data.sales, borderColor: '#7380ec', backgroundColor: 'rgba(115,128,236,0.1)', fill: true, tension: 0.4 },
+                    { label: 'Investment', data: data.investment, borderColor: '#ff7782', backgroundColor: 'rgba(255,119,130,0.1)', fill: true, tension: 0.4 },
+                    { label: 'Profit', data: data.profit, borderColor: '#41f1b6', backgroundColor: 'rgba(65,241,182,0.1)', fill: true, tension: 0.4 }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+
+        // Profit-only Line Chart
+        new Chart(document.getElementById('profitChart'), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{ label: 'Profit', data: data.profit, borderColor: '#41f1b6', backgroundColor: 'rgba(65,241,182,0.2)', fill: true, tension: 0.4, pointRadius: 5 }]
+            },
+            options: { responsive: true }
+        });
+
+        const menuBtn = document.querySelector("#menu-btn");
+        const sideMenu = document.querySelector("#aside-bar");
+        const closeBtn = document.querySelector("#close-btn");
+        if(menuBtn) menuBtn.addEventListener('click', () => sideMenu.classList.add('show-sidebar'));
+        if(closeBtn) closeBtn.addEventListener('click', () => sideMenu.classList.remove('show-sidebar'));
+    </script>
+</body>
+</html>

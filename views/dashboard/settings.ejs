@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Sales Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .settings-card {
+            background: var(--color-white);
+            padding: 1.8rem;
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--box-shadow);
+            margin-top: 1.5rem;
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 500; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: var(--border-radius-1);
+            background: var(--color-light);
+            color: var(--color-dark);
+            border: none;
+        }
+        .btn-save {
+            background: var(--color-primary);
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border-radius: var(--border-radius-1);
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="grid-template-columns: 14rem auto;">
+        <aside id="aside-bar">
+            <div class="top"><div class="logo"><i class="fa-solid fa-chart-line primary" style="font-size:1.6rem;"></i><h2>SALES<span class="danger">PRO</span></h2></div></div>
+            <div class="sidebar">
+                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
+                <a href="/employees"><i class="fa-solid fa-users"></i><h3>Workers</h3></a>
+                <a href="/analytics"><i class="fa-solid fa-chart-line"></i><h3>Analytics</h3></a>
+                <a href="/products"><i class="fa-solid fa-box-open"></i><h3>Products</h3></a>
+                <a href="/reports"><i class="fa-solid fa-file-invoice"></i><h3>PDF Reports</h3></a>
+                <a href="/settings" class="active"><i class="fa-solid fa-gear"></i><h3>Settings</h3></a>
+                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
+            </div>
+        </aside>
+
+        <main>
+            <h1>Account Settings</h1>
+
+            <% if(error) { %>
+                <div style="background: var(--color-danger); color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem;"><%= error %></div>
+            <% } %>
+            <% if(success) { %>
+                <div style="background: var(--color-success); color: black; padding: 1rem; border-radius: 8px; margin-top: 1rem; font-weight: bold;"><%= success %></div>
+            <% } %>
+
+            <!-- PROFILE & CURRENCY -->
+            <div class="settings-card">
+                <h2><i class="fa-solid fa-user-gear primary"></i> Profile & Multi-Currency Settings</h2>
+                <form action="/settings/profile" method="POST" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Business Name / Full Name</label>
+                        <input type="text" name="name" value="<%= fullUser.name %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Dashboard Currency</label>
+                        <select name="currency">
+                            <option value="USD" <%= fullUser.currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
+                            <option value="GBP" <%= fullUser.currency === 'GBP' ? 'selected' : '' %>>GBP (£)</option>
+                            <option value="PKR" <%= fullUser.currency === 'PKR' ? 'selected' : '' %>>PKR (Rs)</option>
+                            <option value="INR" <%= fullUser.currency === 'INR' ? 'selected' : '' %>>INR (₹)</option>
+                            <option value="EUR" <%= fullUser.currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
+                            <option value="AED" <%= fullUser.currency === 'AED' ? 'selected' : '' %>>AED (AED)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-save">Save Profile Changes</button>
+                </form>
+            </div>
+
+            <!-- CHANGE PASSWORD -->
+            <div class="settings-card">
+                <h2><i class="fa-solid fa-key warning"></i> Security & Change Password</h2>
+                <form action="/settings/password" method="POST" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" name="currentPassword" required placeholder="Enter current password">
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" name="newPassword" required placeholder="Enter new password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" name="confirmPassword" required placeholder="Confirm new password">
+                    </div>
+                    <button type="submit" class="btn-save" style="background: var(--color-dark);">Update Password</button>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

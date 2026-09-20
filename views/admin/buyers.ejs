@@ -1,0 +1,68 @@
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Sales Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container" style="grid-template-columns: 14rem auto;">
+        <aside>
+            <div class="top"><div class="logo"><h2>ADMIN<span class="danger">PANEL</span></h2></div></div>
+            <div class="sidebar">
+                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
+                <a href="/admin/buyers" class="active"><i class="fa-solid fa-users"></i><h3>Buyer Management</h3></a>
+                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
+            </div>
+        </aside>
+
+        <main>
+            <h1>Buyer Subscription & Access Control</h1>
+
+            <div class="recent-orders">
+                <h2>Registered Buyers (50-100 Accounts Limit)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Business / Name</th>
+                            <th>Email</th>
+                            <th>Currency</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(buyers && buyers.length > 0) { %>
+                            <% buyers.forEach(b => { %>
+                                <tr>
+                                    <td><b><%= b.name %></b></td>
+                                    <td><%= b.email %></td>
+                                    <td><%= b.currency %></td>
+                                    <td>
+                                        <span class="<%= b.status === 'active' ? 'success' : (b.status === 'pending' ? 'warning' : 'danger') %>">
+                                            <%= b.status.toUpperCase() %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (b.status === 'pending') { %>
+                                            <a href="/admin/buyers/approve/<%= b._id %>" style="background:#41f1b6; color:black; padding:4px 10px; border-radius:4px; font-weight:bold;">Approve Account</a>
+                                        <% } else { %>
+                                            <a href="/admin/buyers/toggle-block/<%= b._id %>" style="background:<%= b.status === 'blocked' ? '#41f1b6' : '#ff7782' %>; color:white; padding:4px 10px; border-radius:4px; font-weight:bold;">
+                                                <%= b.status === 'blocked' ? 'Unblock (Activate)' : 'Block (Read-Only)' %>
+                                            </a>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr><td colspan="5">No buyers registered yet.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

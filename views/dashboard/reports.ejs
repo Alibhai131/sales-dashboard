@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Sales Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container" style="grid-template-columns: 14rem auto;">
+        <aside id="aside-bar">
+            <div class="top">
+                <div class="logo"><i class="fa-solid fa-chart-line primary" style="font-size:1.6rem;"></i><h2>SALES<span class="danger">PRO</span></h2></div>
+                <div class="close" id="close-btn"><i class="fa-solid fa-xmark"></i></div>
+            </div>
+            <div class="sidebar">
+                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
+                <a href="/employees"><i class="fa-solid fa-users"></i><h3>Workers</h3></a>
+                <a href="/analytics"><i class="fa-solid fa-chart-line"></i><h3>Analytics</h3></a>
+                <a href="/products"><i class="fa-solid fa-box-open"></i><h3>Products</h3></a>
+                <a href="/reports" class="active"><i class="fa-solid fa-file-invoice"></i><h3>PDF Reports</h3></a>
+                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
+            </div>
+        </aside>
+
+        <main>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h1>PDF Reports</h1>
+                <button id="menu-btn" style="display:none; background:transparent; cursor:pointer;"><i class="fa-solid fa-bars"></i></button>
+            </div>
+
+            <div style="background: var(--color-white); padding: 2rem; border-radius: var(--card-border-radius); box-shadow: var(--box-shadow); margin-top:1.5rem; text-align:center;">
+                <i class="fa-solid fa-file-pdf" style="font-size:4rem; color: var(--color-danger);"></i>
+                <h2 style="margin-top:1rem;">Download Full Sales Report</h2>
+                <p class="text-muted" style="margin:0.5rem 0 1.5rem;">Get a professional PDF of all your sales, profits, investment, and ROI — exactly as shown in your dashboard.</p>
+                <a href="/reports/download" style="background: var(--color-danger); color:white; padding:0.9rem 2rem; border-radius:8px; font-weight:bold; display:inline-block;">
+                    <i class="fa-solid fa-download"></i> Download PDF Report
+                </a>
+            </div>
+
+            <div class="recent-orders">
+                <h2>Sales History Preview (<%= sales.length %> records)</h2>
+                <table>
+                    <thead>
+                        <tr><th>Product</th><th>Investment</th><th>Sold For</th><th>Profit</th><th>ROI</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        <% if(sales && sales.length > 0) { %>
+                            <% sales.forEach(s => { %>
+                                <tr>
+                                    <td><%= s.productName %> (x<%= s.quantity %>)</td>
+                                    <td><%= user.currency %> <%= s.totalInvestment %></td>
+                                    <td><%= user.currency %> <%= s.totalSales %></td>
+                                    <td class="success">+<%= user.currency %> <%= s.profit %></td>
+                                    <td><%= s.roiPercentage %>%</td>
+                                    <td><%= new Date(s.createdAt).toLocaleDateString() %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr><td colspan="6">No sales data to report yet.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const menuBtn = document.querySelector("#menu-btn");
+        const sideMenu = document.querySelector("#aside-bar");
+        const closeBtn = document.querySelector("#close-btn");
+        if(menuBtn) menuBtn.addEventListener('click', () => sideMenu.classList.add('show-sidebar'));
+        if(closeBtn) closeBtn.addEventListener('click', () => sideMenu.classList.remove('show-sidebar'));
+    </script>
+</body>
+</html>

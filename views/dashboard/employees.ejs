@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workers - Sales Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <aside>
+            <div class="top"><div class="logo"><h2>SALES<span class="danger">PRO</span></h2></div></div>
+            <div class="sidebar">
+                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
+                <a href="/employees" class="active"><i class="fa-solid fa-users"></i><h3>Workers</h3></a>
+                <a href="/products"><i class="fa-solid fa-box-open"></i><h3>Products</h3></a>
+                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
+            </div>
+        </aside>
+
+        <main>
+            <h1>Worker / Staff Sales Tracking (Max 10)</h1>
+
+            <% if(error) { %>
+                <div style="background: var(--color-danger); color: white; padding: 1rem; border-radius: 8px; margin: 1rem 0;"><%= error %></div>
+            <% } %>
+
+            <div style="background: var(--color-white); padding: 1.5rem; border-radius: var(--card-border-radius); box-shadow: var(--box-shadow); margin-top: 1rem;">
+                <h2>Add Worker Profile (<%= employees.length %>/10)</h2>
+                <% if(employees.length < 10) { %>
+                    <form action="/employees/add" method="POST" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <label>Worker Name</label>
+                            <input type="text" name="name" required style="width:100%; padding:0.7rem; border-radius:8px; background:var(--color-light); border:none;">
+                        </div>
+                        <div>
+                            <label>Designation / Role</label>
+                            <input type="text" name="roleTitle" placeholder="e.g. Counter Sales" style="width:100%; padding:0.7rem; border-radius:8px; background:var(--color-light); border:none;">
+                        </div>
+                        <div>
+                            <label>Phone Number</label>
+                            <input type="text" name="phone" placeholder="Phone" style="width:100%; padding:0.7rem; border-radius:8px; background:var(--color-light); border:none;">
+                        </div>
+                        <div>
+                            <button type="submit" style="width:100%; padding:0.75rem; background:var(--color-primary); color:white; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:1.4rem;">Add Worker</button>
+                        </div>
+                    </form>
+                <% } else { %>
+                    <p class="danger" style="margin-top: 1rem; font-weight: bold;">Maximum limit of 10 workers reached.</p>
+                <% } %>
+            </div>
+
+            <div class="recent-orders">
+                <h2>Worker Profiles & Sales Summary</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Worker Name</th>
+                            <th>Role</th>
+                            <th>Total Items Sold</th>
+                            <th>Total Revenue Generated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(employees && employees.length > 0) { %>
+                            <% employees.forEach(e => { %>
+                                <tr>
+                                    <td><b><%= e.name %></b></td>
+                                    <td><%= e.roleTitle %></td>
+                                    <td><%= e.totalSalesCount %> items</td>
+                                    <td class="success"><b><%= user.currency %> <%= e.totalSalesAmount %></b></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr><td colspan="4">No workers added yet. Add up to 10 workers above.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
