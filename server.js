@@ -7,19 +7,19 @@ const connectDB = require('./config/db.js');
 dotenv.config();
 const app = express();
 
-// Connect Database
-connectDB();
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
-// View Engine
+// Path resolution for Vercel
+const publicPath = path.join(__dirname, 'public');
+const viewsPath = path.join(__dirname, 'views');
+
+app.use(express.static(publicPath));
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', viewsPath);
 
-// Session
+// Session (Standard memory store for now)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secretkey',
     resave: false,
@@ -39,14 +39,18 @@ app.use('/settings', require('./routes/settingsRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 app.use('/api', require('./routes/apiRoutes'));
 
-app.get('/', (req, res) => {
-    res.redirect('/auth/login');
+// Connect to DB on every request (Vercel best practice)
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
 });
 
-// Export app for Vercel Serverless environment
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Sales Dashboard live at http://localhost:${PORT}`));
-}
+app.get('/', (req, res) => {
+    if (req.session.user) {
+        res.redirect('/dashboard');
+    } else {
+        res.redirect('/auth/login');
+    }
+});
 
 module.exports = app;
