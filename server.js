@@ -23,17 +23,13 @@ app.use(cookieParser());
 connectDB();
 
 // Session Setup with MongoStore
-const sessionConfig = {
-    secret: process.env.JWT_SECRET || 'sales_dashboard_secret_key_2024',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
-    }
-};
+if (process.env.MONGODB_URI) {
+    sessionConfig.store = MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        ttl: 14 * 24 * 60 * 60,
+        touchAfter: 24 * 3600 // Only update session DB once per 24 hours unless modified (3x Speed Boost!)
+    });
+}
 
 if (process.env.MONGODB_URI) {
     sessionConfig.store = MongoStore.create({

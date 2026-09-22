@@ -1,0 +1,38 @@
+<% 
+    var activePage = 'messages'; 
+    var pageTitle = 'Messages Inbox';
+    var title = 'Messages & Notifications - Sales Dashboard';
+%>
+
+<div class="card" style="max-width: 900px; margin: 0 auto;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2><i class="fas fa-envelope"></i> Messages & Notifications</h2>
+        <span class="count-badge"><%= typeof notifications !== 'undefined' ? notifications.length : 0 %> Messages</span>
+    </div>
+    <div style="padding: 1.5rem;">
+        <% if (typeof notifications !== 'undefined' && notifications.length > 0) { %>
+            <div class="notifications-inbox-list">
+                <% notifications.forEach(function(notif) { %>
+                    <div class="notification-inbox-item" style="display: flex; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--border); align-items: flex-start;">
+                        <div class="notif-icon <%= notif.type || 'sale' %>" style="width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(37,99,235,0.1); color: var(--primary);">
+                            <i class="fas <%= notif.type === 'order' ? 'fa-shopping-cart' : notif.type === 'premium' ? 'fa-crown' : 'fa-bell' %>"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; font-weight: 600;"><%= notif.title || 'Notification' %></h4>
+                            <p style="margin: 0; color: var(--text); font-size: 0.9rem;"><%= notif.message %></p>
+                            <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.4rem;">
+                                <%= new Date(notif.createdAt).toLocaleString() %>
+                            </span>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="empty-state" style="padding: 3rem 1rem; text-align: center;">
+                <i class="fas fa-inbox" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 0.75rem; display: block;"></i>
+                <h3>No Messages or Notifications</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">You will receive alerts here when online sales or system updates occur.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
