@@ -1,9 +1,18 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/css/(.*)", "destination": "/public/css/$1" },
-    { "source": "/js/(.*)", "destination": "/public/js/$1" },
-    { "source": "/images/(.*)", "destination": "/public/images/$1" },
-    { "source": "/(.*)", "destination": "/api/index.js" }
+  "builds": [
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["views/**", "public/**"]
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/css/(.*)", "dest": "/public/css/$1" },
+    { "src": "/js/(.*)", "dest": "/public/js/$1" },
+    { "src": "/images/(.*)", "dest": "/public/images/$1" },
+    { "src": "/(.*)", "dest": "/api/index.js" }
   ]
 }

@@ -1,19 +1,18 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
-    try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+let isConnected = false;
 
-        console.log(`🍃 MongoDB Connected: ${conn.connection.host}`);
+const connectDB = async () => {
+    if (isConnected) {
+        return;
+    }
+
+    try {
+        const db = await mongoose.connect(process.env.MONGODB_URI);
+        isConnected = db.connections[0].readyState === 1;
+        console.log(`🍃 MongoDB Connected: ${db.connection.host}`);
     } catch (error) {
         console.error(`❌ MongoDB Connection Error: ${error.message}`);
-        // Do not process.exit(1) on Vercel serverless environments
-        if (process.env.NODE_ENV !== 'production') {
-            process.exit(1);
-        }
     }
 };
 
