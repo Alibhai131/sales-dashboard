@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const expressLayouts = require('express-ejs-layouts');
+const connectDB = require('./config/db');
 
 dotenv.config();
 
@@ -18,12 +19,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Session Configuration
-const sessionSecret = process.env.JWT_SECRET || 'sales_dashboard_secret_key_2024';
-const mongoUri = process.env.MONGODB_URI;
+// Database Connection Middleware for Serverless
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+    } catch (err) {
+        console.error('DB Connection Middleware Error:', err);
+    }
+    next();
+});
 
+// Session Configuration with MongoStore
 const sessionConfig = {
-    secret: sessionSecret,
+    secret: process.env.JWT_SECRET || 'sales_dashboard_secret_key_2024',
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -34,9 +42,9 @@ const sessionConfig = {
     }
 };
 
-if (mongoUri) {
+if (process.env.MONGODB_URI) {
     sessionConfig.store = MongoStore.create({
-        mongoUrl: mongoUri,
+        mongoUrl: process.env.MONGODB_URI,
         ttl: 14 * 24 * 60 * 60,
         touchAfter: 24 * 3600
     });
@@ -44,7 +52,7 @@ if (mongoUri) {
 
 app.use(session(sessionConfig));
 
-// Static Files & View Engine Setup
+// Static Files & View Engine Setup (Vercel Serverless Compatible)
 const rootDir = process.cwd();
 app.use(express.static(path.join(rootDir, 'public')));
 app.use(expressLayouts);
@@ -52,7 +60,7 @@ app.set('layout', 'layouts/main');
 app.set('view engine', 'ejs');
 app.set('views', path.join(rootDir, 'views'));
 
-// Custom Middleware for User & Currency Locals
+// Custom Middleware for User Locals & Currency
 app.use((req, res, next) => {
     const sessionUser = (req.session && req.session.user) ? req.session.user : null;
     res.locals.user = sessionUser;
@@ -111,7 +119,7 @@ app.use((req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('Server Error:', err);
-    res.status(500).send('Internal Server Error: ' + err.message);
+    res.status(500).send('Server Error: ' + err.message);
 });
 
 // Start Server locally
