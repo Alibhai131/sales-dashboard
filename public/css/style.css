@@ -1830,3 +1830,145 @@ input:focus, textarea:focus, select:focus {
 .settings-panel.active {
     display: block;
 }
+/* ============================================
+   MOBILE PHONE OPTIMIZATIONS (RESPONSIVE FIX)
+   ============================================ */
+
+@media (max-width: 640px) {
+    /* Page Padding */
+    .page-content {
+        padding: 0.75rem !important;
+    }
+    
+    .top-header {
+        padding: 0 0.75rem !important;
+    }
+
+    .page-title {
+        font-size: 1.1rem !important;
+    }
+
+    /* Compact 2-Column Stat Cards Grid on Mobile */
+    .stats-grid, .stats-grid.four-col {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.6rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .stat-card {
+        padding: 0.75rem 0.6rem !important;
+        flex-direction: column !important;
+        text-align: center !important;
+        gap: 0.4rem !important;
+        border-radius: 10px !important;
+    }
+
+    .stat-icon {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 0.95rem !important;
+        border-radius: 8px !important;
+    }
+
+    .stat-details h3 {
+        font-size: 0.7rem !important;
+        white-space: nowrap;
+    }
+
+    .stat-value {
+        font-size: 1.15rem !important;
+        margin: 0.1rem 0 !important;
+    }
+
+    .stat-period {
+        font-size: 0.65rem !important;
+    }
+
+    /* Page Header Actions / Buttons on Mobile */
+    .page-header-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.6rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .header-actions {
+        display: flex !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    .header-actions .btn {
+        flex: 1 !important;
+        justify-content: center !important;
+        padding: 0.55rem 0.4rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Mobile Cards & Tables */
+    .card {
+        margin-bottom: 1rem !important;
+        border-radius: 10px !important;
+    }
+
+    .card-header {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .card-header h2 {
+        font-size: 0.95rem !important;
+    }
+
+    .card-body, .quick-sale-form, .updates-list, .analytics-mini {
+        padding: 0.85rem 1rem !important;
+    }
+
+    /* Smooth Table Sideways Scroll on Mobile */
+    .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+        min-width: 580px !important; /* Prevents squishing columns on small phones */
+    }
+
+    .data-table thead th, 
+    .data-table tbody td {
+        padding: 0.55rem 0.6rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Quick Add Sale Form Row */
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 0.6rem !important;
+    }
+
+    /* Sub-Admin Cards on Mobile */
+    .subadmin-card {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        padding: 0.6rem 0 !important;
+    }
+
+    .sa-info h4 {
+        font-size: 0.85rem !important;
+    }
+
+    .sa-info span {
+        font-size: 0.75rem !important;
+    }
+
+    /* Modals on Mobile */
+    .modal-content {
+        width: 94% !important;
+        margin: 0.5rem !important;
+        border-radius: 12px !important;
+    }
+
+    .modal-body {
+        padding: 1rem !important;
+    }
+}
