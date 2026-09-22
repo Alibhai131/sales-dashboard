@@ -12,7 +12,6 @@ const productSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Virtual for profit & margin
 productSchema.virtual('profit').get(function() {
     return this.sellingPrice - this.costPrice;
 });
@@ -25,4 +24,4 @@ productSchema.virtual('margin').get(function() {
 productSchema.set('toJSON', { virtuals: true });
 productSchema.set('toObject', { virtuals: true });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.models.Product || mongoose.model('Product', productSchema);
