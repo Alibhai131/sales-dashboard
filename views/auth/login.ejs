@@ -4,70 +4,216 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sales Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .auth-container {
+        .split-auth {
             display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+        .auth-left {
+            flex: 1;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%);
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: var(--color-background);
+            padding: 3rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
         }
-        .auth-card {
-            background: var(--color-white);
-            padding: 2.5rem;
-            border-radius: var(--card-border-radius);
-            box-shadow: var(--box-shadow);
+        .auth-left::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+            top: -100px;
+            left: -100px;
+        }
+        .auth-left::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+            bottom: -80px;
+            right: -80px;
+        }
+        .auth-left-content {
+            position: relative;
+            z-index: 2;
+            max-width: 420px;
+            text-align: center;
+        }
+        .auth-left h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+        .auth-left p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        .feature-list {
+            margin-top: 2.5rem;
+            text-align: left;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            margin-bottom: 1.1rem;
+            font-size: 0.95rem;
+        }
+        .feature-item i {
+            background: rgba(255,255,255,0.2);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #f8fafc;
+        }
+        .auth-right .auth-card {
             width: 100%;
             max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
         }
-        .auth-card h2 { text-align: center; margin-bottom: 1.5rem; color: var(--color-primary); }
-        .form-group { margin-bottom: 1.2rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; }
-        .form-group input {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: var(--border-radius-1);
-            background: var(--color-light);
-            color: var(--color-dark);
+        @media (max-width: 900px) {
+            .split-auth { flex-direction: column; }
+            .auth-left { padding: 2.5rem 1.5rem; min-height: auto; }
+            .auth-left h1 { font-size: 1.8rem; }
+            .feature-list { display: none; }
         }
-        .btn {
-            width: 100%;
-            padding: 0.9rem;
-            background: var(--color-primary);
-            color: white;
-            border-radius: var(--border-radius-1);
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .error-msg { color: var(--color-danger); text-align: center; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <h2><i class="fa-solid fa-chart-line"></i> Sales Dashboard</h2>
-            
-            <% if(error) { %>
-                <div class="error-msg"><%= error %></div>
-            <% } %>
-<p style="text-align: right; margin-bottom: 1rem;"><a href="/auth/forgot-password" class="primary" style="font-size:0.8rem;">Forgot Password?</a></p>
-            <form action="/auth/login" method="POST">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" name="email" required placeholder="Enter your email">
+    <div class="split-auth">
+        <!-- Left Branding Panel -->
+        <div class="auth-left">
+            <div class="auth-left-content">
+                <div style="width: 64px; height: 64px; background: white; color: #2563eb; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 10px 20px rgba(0,0,0,0.15);">
+                    <i class="fas fa-chart-pie"></i>
                 </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" required placeholder="Enter your password">
+                <h1>Sales Dashboard</h1>
+                <p>Track sales, calculate real profit & ROI, manage employees and grow your business with clarity.</p>
+                
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Live Profit, Margin & ROI tracking</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-users"></i>
+                        <span>Employee performance monitoring</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Downloadable PDF & CSV reports</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-globe"></i>
+                        <span>Multi-currency support (PKR, USD, GBP...)</span>
+                    </div>
                 </div>
-                <button type="submit" class="btn">Login</button>
-            </form>
-            <p style="text-align: center; margin-top: 1rem;">
-                Don't have an account? <a href="/auth/register" class="primary">Register</a>
-            </p>
+            </div>
+        </div>
+
+        <!-- Right Login Form -->
+        <div class="auth-right">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <h1 style="font-size: 1.6rem; margin-bottom: 0.3rem;">Welcome back</h1>
+                    <p class="auth-subtitle">Sign in to your account</p>
+                </div>
+                
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-error" style="border-radius: 10px; margin-bottom: 1.5rem;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span><%= error %></span>
+                    </div>
+                <% } %>
+                
+                <% if (typeof success !== 'undefined' && success) { %>
+                    <div class="alert alert-success" style="border-radius: 10px; margin-bottom: 1.5rem;">
+                        <i class="fas fa-check-circle"></i>
+                        <span><%= success %></span>
+                    </div>
+                <% } %>
+                
+                <form action="/auth/login" method="POST" class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required 
+                               value="<%= typeof email !== 'undefined' ? email : '' %>">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password" placeholder="••••••••" required>
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember">
+                            <span class="checkmark"></span>
+                            Remember me
+                        </label>
+                        <a href="/auth/forgot-password" class="forgot-link">Forgot password?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+                        <span class="btn-text">Sign In</span>
+                        <span class="btn-loader hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                    </button>
+                </form>
+                
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="/auth/register">Create one free</a></p>
+                </div>
+            </div>
         </div>
     </div>
+    
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const pwd = document.getElementById('password');
+            const icon = this.querySelector('i');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+        
+        document.getElementById('loginForm').addEventListener('submit', function() {
+            const btn = document.getElementById('loginBtn');
+            btn.querySelector('.btn-text').classList.add('hidden');
+            btn.querySelector('.btn-loader').classList.remove('hidden');
+        });
+    </script>
 </body>
 </html>

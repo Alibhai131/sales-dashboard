@@ -1,77 +1,183 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports - Sales Dashboard</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container" style="grid-template-columns: 14rem auto;">
-        <aside id="aside-bar">
-            <div class="top">
-                <div class="logo"><i class="fa-solid fa-chart-line primary" style="font-size:1.6rem;"></i><h2>SALES<span class="danger">PRO</span></h2></div>
-                <div class="close" id="close-btn"><i class="fa-solid fa-xmark"></i></div>
-            </div>
-            <div class="sidebar">
-                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
-                <a href="/employees"><i class="fa-solid fa-users"></i><h3>Workers</h3></a>
-                <a href="/analytics"><i class="fa-solid fa-chart-line"></i><h3>Analytics</h3></a>
-                <a href="/products"><i class="fa-solid fa-box-open"></i><h3>Products</h3></a>
-                <a href="/reports" class="active"><i class="fa-solid fa-file-invoice"></i><h3>PDF Reports</h3></a>
-                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
-            </div>
-        </aside>
+<% 
+    var activePage = 'reports'; 
+    var pageTitle = 'Reports';
+    var title = 'Reports - Sales Dashboard';
+%>
 
-        <main>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h1>PDF Reports</h1>
-                <button id="menu-btn" style="display:none; background:transparent; cursor:pointer;"><i class="fa-solid fa-bars"></i></button>
-            </div>
-
-            <div style="background: var(--color-white); padding: 2rem; border-radius: var(--card-border-radius); box-shadow: var(--box-shadow); margin-top:1.5rem; text-align:center;">
-                <i class="fa-solid fa-file-pdf" style="font-size:4rem; color: var(--color-danger);"></i>
-                <h2 style="margin-top:1rem;">Download Full Sales Report</h2>
-                <p class="text-muted" style="margin:0.5rem 0 1.5rem;">Get a professional PDF of all your sales, profits, investment, and ROI — exactly as shown in your dashboard.</p>
-                <a href="/reports/download" style="background: var(--color-danger); color:white; padding:0.9rem 2rem; border-radius:8px; font-weight:bold; display:inline-block;">
-                    <i class="fa-solid fa-download"></i> Download PDF Report
-                </a>
-            </div>
-
-            <div class="recent-orders">
-                <h2>Sales History Preview (<%= sales.length %> records)</h2>
-                <table>
-                    <thead>
-                        <tr><th>Product</th><th>Investment</th><th>Sold For</th><th>Profit</th><th>ROI</th><th>Date</th></tr>
-                    </thead>
-                    <tbody>
-                        <% if(sales && sales.length > 0) { %>
-                            <% sales.forEach(s => { %>
-                                <tr>
-                                    <td><%= s.productName %> (x<%= s.quantity %>)</td>
-                                    <td><%= user.currency %> <%= s.totalInvestment %></td>
-                                    <td><%= user.currency %> <%= s.totalSales %></td>
-                                    <td class="success">+<%= user.currency %> <%= s.profit %></td>
-                                    <td><%= s.roiPercentage %>%</td>
-                                    <td><%= new Date(s.createdAt).toLocaleDateString() %></td>
-                                </tr>
-                            <% }) %>
-                        <% } else { %>
-                            <tr><td colspan="6">No sales data to report yet.</td></tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-        </main>
+<div class="page-header-row">
+    <div>
+        <p class="page-description">View all your sales history and download detailed reports</p>
     </div>
+    <div class="header-actions">
+        <button class="btn btn-outline" id="downloadPDF">
+            <i class="fas fa-file-pdf"></i> Download PDF
+        </button>
+        <button class="btn btn-outline" id="downloadCSV">
+            <i class="fas fa-file-csv"></i> Download CSV
+        </button>
+    </div>
+</div>
 
-    <script>
-        const menuBtn = document.querySelector("#menu-btn");
-        const sideMenu = document.querySelector("#aside-bar");
-        const closeBtn = document.querySelector("#close-btn");
-        if(menuBtn) menuBtn.addEventListener('click', () => sideMenu.classList.add('show-sidebar'));
-        if(closeBtn) closeBtn.addEventListener('click', () => sideMenu.classList.remove('show-sidebar'));
-    </script>
-</body>
-</html>
+<!-- Filters -->
+<div class="card">
+    <div class="report-filters">
+        <div class="form-group">
+            <label>Date From</label>
+            <input type="date" id="dateFrom" class="form-input">
+        </div>
+        <div class="form-group">
+            <label>Date To</label>
+            <input type="date" id="dateTo" class="form-input" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div class="form-group">
+            <label>Sale Type</label>
+            <select id="typeFilter" class="form-select">
+                <option value="">All</option>
+                <option value="local">Local</option>
+                <option value="online">Online</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Employee</label>
+            <select id="empFilter" class="form-select">
+                <option value="">All</option>
+                <% if (typeof employees !== 'undefined') { %>
+                    <% employees.forEach(function(emp) { %>
+                        <option value="<%= emp._id %>"><%= emp.name %></option>
+                    <% }); %>
+                <% } %>
+            </select>
+        </div>
+        <div class="form-group flex-end">
+            <button class="btn btn-primary" id="applyFilters">
+                <i class="fas fa-filter"></i> Apply
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Row -->
+<div class="stats-grid four-col">
+    <div class="stat-card compact">
+        <h3>Total Sales</h3>
+        <p class="stat-value" id="reportTotalSales">
+            <span class="currency-symbol"><%= typeof currencySymbol !== 'undefined' ? currencySymbol : '$' %></span>
+            <span class="amount"><%= typeof reportStats !== 'undefined' ? reportStats.totalSales.toLocaleString() : '0' %></span>
+        </p>
+    </div>
+    <div class="stat-card compact">
+        <h3>Total Profit</h3>
+        <p class="stat-value text-success" id="reportTotalProfit">
+            <span class="currency-symbol"><%= typeof currencySymbol !== 'undefined' ? currencySymbol : '$' %></span>
+            <span class="amount"><%= typeof reportStats !== 'undefined' ? reportStats.totalProfit.toLocaleString() : '0' %></span>
+        </p>
+    </div>
+    <div class="stat-card compact">
+        <h3>Total Investment</h3>
+        <p class="stat-value" id="reportTotalCost">
+            <span class="currency-symbol"><%= typeof currencySymbol !== 'undefined' ? currencySymbol : '$' %></span>
+            <span class="amount"><%= typeof reportStats !== 'undefined' ? reportStats.totalCost.toLocaleString() : '0' %></span>
+        </p>
+    </div>
+    <div class="stat-card compact">
+        <h3>Total Orders</h3>
+        <p class="stat-value"><span class="amount"><%= typeof reportStats !== 'undefined' ? reportStats.totalOrders : '0' %></span></p>
+    </div>
+</div>
+
+<!-- Sales Table -->
+<div class="card">
+    <div class="card-header">
+        <h2>Sales History</h2>
+        <span class="record-count" id="recordCount">
+            <%= typeof sales !== 'undefined' ? sales.length : 0 %> records
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="salesTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Profit</th>
+                    <th>ROI</th>
+                    <th>Type</th>
+                    <th>Employee</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="salesTableBody">
+                <% if (typeof sales !== 'undefined' && sales.length > 0) { %>
+                    <% sales.forEach(function(sale) { %>
+                        <tr>
+                            <td><%= new Date(sale.createdAt).toLocaleDateString() %></td>
+                            <td><strong><%= sale.productName %></strong></td>
+                            <td><%= sale.quantity %></td>
+                            <td><%= currencySymbol %><%= sale.costPrice.toLocaleString() %></td>
+                            <td class="text-success"><%= currencySymbol %><%= sale.sellingPrice.toLocaleString() %></td>
+                            <td class="<%= sale.profit >= 0 ? 'text-success' : 'text-danger' %>">
+                                <%= currencySymbol %><%= sale.profit.toLocaleString() %>
+                            </td>
+                            <td><%= sale.costPrice > 0 ? ((sale.profit / sale.costPrice) * 100).toFixed(1) : '0' %>%</td>
+                            <td>
+                                <span class="type-badge type-<%= sale.saleType %>">
+                                    <%= sale.saleType === 'online' ? '🌐 Online' : '🏪 Local' %>
+                                </span>
+                            </td>
+                            <td><%= sale.employeeName || 'Self' %></td>
+                            <td>
+                                <span class="status-badge status-<%= sale.status.toLowerCase() %>">
+                                    <%= sale.status %>
+                                </span>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="10" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No sales records found</p>
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+        <div class="pagination">
+            <% for (let i = 1; i <= totalPages; i++) { %>
+                <a href="?page=<%= i %>" class="page-btn <%= typeof currentPage !== 'undefined' && currentPage === i ? 'active' : '' %>"><%= i %></a>
+            <% } %>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    // Apply Filters
+    document.getElementById('applyFilters').addEventListener('click', function() {
+        const params = new URLSearchParams({
+            dateFrom: document.getElementById('dateFrom').value,
+            dateTo: document.getElementById('dateTo').value,
+            type: document.getElementById('typeFilter').value,
+            employee: document.getElementById('empFilter').value
+        });
+        window.location.href = `/reports?${params.toString()}`;
+    });
+    
+    // Download PDF
+    document.getElementById('downloadPDF').addEventListener('click', function() {
+        const params = new URLSearchParams(window.location.search);
+        window.open(`/reports/download/pdf?${params.toString()}`, '_blank');
+    });
+    
+    // Download CSV
+    document.getElementById('downloadCSV').addEventListener('click', function() {
+        const params = new URLSearchParams(window.location.search);
+        window.open(`/reports/download/csv?${params.toString()}`, '_blank');
+    });
+</script>

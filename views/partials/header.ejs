@@ -1,0 +1,82 @@
+<header class="top-header">
+    <div class="header-left">
+        <button class="hamburger-btn" id="hamburgerBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="page-title">
+    <% if (typeof user !== 'undefined' && user.role === 'buyer' && user.shopName) { %>
+        <%= user.shopName %>
+    <% } else { %>
+        <%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %>
+    <% } %>
+</h1>
+    </div>
+    
+    <div class="header-right">
+        <!-- Date Picker -->
+        <div class="date-picker-wrapper">
+            <input type="date" id="dateFilter" class="date-input" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        
+        <!-- Currency Selector -->
+               <!-- Currency Selector -->
+        <div class="currency-selector">
+            <select id="currencySelect" class="currency-select">
+                <option value="USD" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'USD') ? 'selected' : '' %>>$ USD</option>
+                <option value="GBP" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'GBP') ? 'selected' : '' %>>£ GBP</option>
+                <option value="PKR" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'PKR') ? 'selected' : '' %>>Rs PKR</option>
+                <option value="INR" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'INR') ? 'selected' : '' %>>₹ INR</option>
+                <option value="EUR" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'EUR') ? 'selected' : '' %>>€ EUR</option>
+                <option value="AED" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'AED') ? 'selected' : '' %>>د.إ AED</option>
+            </select>
+        </div>
+        
+        <!-- Theme Toggle -->
+        <div class="theme-toggle">
+            <button id="themeBtn" class="icon-btn">
+                <i class="fas fa-sun" id="themeIcon"></i>
+            </button>
+        </div>
+        
+        <!-- Notifications -->
+        <div class="notification-wrapper">
+            <button class="icon-btn notification-btn" id="notificationBtn">
+                <i class="fas fa-bell"></i>
+                <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
+                    <span class="notification-dot"><%= unreadCount %></span>
+                <% } %>
+            </button>
+        </div>
+        
+        <!-- User Profile -->
+        <div class="user-profile" id="userProfile">
+            <div class="user-info">
+                <span class="user-name"><%= typeof user !== 'undefined' ? user.name : 'User' %></span>
+                <span class="user-role"><%= typeof user !== 'undefined' ? user.role : 'Admin' %></span>
+            </div>
+            <div class="user-avatar">
+                <% if (typeof user !== 'undefined' && user.avatar) { %>
+                    <img src="<%= user.avatar %>" alt="<%= user.name %>">
+                <% } else { %>
+                    <div class="avatar-placeholder">
+                        <%= typeof user !== 'undefined' ? user.name.charAt(0).toUpperCase() : 'U' %>
+                    </div>
+                <% } %>
+            </div>
+            
+            <!-- Dropdown -->
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="/settings" class="dropdown-item">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="/settings" class="dropdown-item">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <hr>
+                <a href="/auth/logout" class="dropdown-item text-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</header>

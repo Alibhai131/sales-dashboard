@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const { isAuthenticated, checkSubscription } = require('../middleware/auth');
 const employeeController = require('../controllers/employeeController');
-const { ensureAuthenticated, checkSubscriptionStatus } = require('../middleware/auth');
 
-router.get('/', ensureAuthenticated, checkSubscriptionStatus, employeeController.getEmployees);
-router.post('/add', ensureAuthenticated, checkSubscriptionStatus, employeeController.postAddEmployee);
+router.use(isAuthenticated);
+router.use(checkSubscription);
+
+router.get('/', employeeController.getEmployees);
+router.get('/:id', employeeController.getEmployeeById);
+router.post('/', employeeController.createEmployee);
+router.put('/:id', employeeController.updateEmployee);
+router.delete('/:id', employeeController.deleteEmployee);
 
 module.exports = router;

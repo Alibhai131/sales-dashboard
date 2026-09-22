@@ -1,68 +1,590 @@
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Sales Dashboard</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container" style="grid-template-columns: 14rem auto;">
-        <aside>
-            <div class="top"><div class="logo"><h2>ADMIN<span class="danger">PANEL</span></h2></div></div>
-            <div class="sidebar">
-                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
-                <a href="/admin/buyers" class="active"><i class="fa-solid fa-users"></i><h3>Buyer Management</h3></a>
-                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
-            </div>
-        </aside>
+<% 
+    var activePage = 'customers'; 
+    var pageTitle = 'Manage Buyers';
+    var title = 'Buyers - Admin Dashboard';
+%>
 
-        <main>
-            <h1>Buyer Subscription & Access Control</h1>
-
-            <div class="recent-orders">
-                <h2>Registered Buyers (50-100 Accounts Limit)</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Business / Name</th>
-                            <th>Email</th>
-                            <th>Currency</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if(buyers && buyers.length > 0) { %>
-                            <% buyers.forEach(b => { %>
-                                <tr>
-                                    <td><b><%= b.name %></b></td>
-                                    <td><%= b.email %></td>
-                                    <td><%= b.currency %></td>
-                                    <td>
-                                        <span class="<%= b.status === 'active' ? 'success' : (b.status === 'pending' ? 'warning' : 'danger') %>">
-                                            <%= b.status.toUpperCase() %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <% if (b.status === 'pending') { %>
-                                            <a href="/admin/buyers/approve/<%= b._id %>" style="background:#41f1b6; color:black; padding:4px 10px; border-radius:4px; font-weight:bold;">Approve Account</a>
-                                        <% } else { %>
-                                            <a href="/admin/buyers/toggle-block/<%= b._id %>" style="background:<%= b.status === 'blocked' ? '#41f1b6' : '#ff7782' %>; color:white; padding:4px 10px; border-radius:4px; font-weight:bold;">
-                                                <%= b.status === 'blocked' ? 'Unblock (Activate)' : 'Block (Read-Only)' %>
-                                            </a>
-                                        <% } %>
-                                    </td>
-                                </tr>
-                            <% }) %>
-                        <% } else { %>
-                            <tr><td colspan="5">No buyers registered yet.</td></tr>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-        </main>
+<div class="page-header-row">
+    <div>
+        <p class="page-description">
+            <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
+                Super Admin Mode: Full control over all buyers and sub-admins
+            <% } else { %>
+                Sub Admin Mode: View buyers and register new ones
+            <% } %>
+        </p>
     </div>
-</body>
-</html>
+    <div class="header-actions">
+        <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
+            <button class="btn btn-outline" id="openSubAdminBtn">
+                <i class="fas fa-user-shield"></i> Add Sub Admin
+            </button>
+        <% } %>
+        <button class="btn btn-primary" id="openBuyerBtn">
+            <i class="fas fa-user-plus"></i> Add Buyer
+        </button>
+    </div>
+</div>
+
+<!-- Admin Stats Grid -->
+<div class="stats-grid four-col">
+    <div class="stat-card compact">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div>
+            <h3>Total Buyers</h3>
+            <p class="stat-value"><%= typeof adminStats !== 'undefined' ? adminStats.totalBuyers : 0 %></p>
+        </div>
+    </div>
+    <div class="stat-card compact">
+        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+        <div>
+            <h3>Active</h3>
+            <p class="stat-value"><%= typeof adminStats !== 'undefined' ? adminStats.activeBuyers : 0 %></p>
+        </div>
+    </div>
+    <div class="stat-card compact">
+        <div class="stat-icon red"><i class="fas fa-ban"></i></div>
+        <div>
+            <h3>Blocked</h3>
+            <p class="stat-value"><%= typeof adminStats !== 'undefined' ? adminStats.blockedBuyers : 0 %></p>
+        </div>
+    </div>
+    <div class="stat-card compact">
+        <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+        <div>
+            <h3>Pending Approval</h3>
+            <p class="stat-value"><%= typeof adminStats !== 'undefined' ? adminStats.pendingBuyers : 0 %></p>
+        </div>
+    </div>
+</div>
+
+<!-- Sub Admins Section (Super Admin Only) -->
+<% if (typeof user !== 'undefined' && user.role === 'superadmin' && typeof subAdmins !== 'undefined') { %>
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-user-shield"></i> Sub Admins (Max 2)</h2>
+        <span class="count-badge"><%= subAdmins.length %> / 2</span>
+    </div>
+    <div class="subadmin-grid">
+        <% if (subAdmins.length > 0) { %>
+            <% subAdmins.forEach(function(sa) { %>
+                <div class="subadmin-card" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border);">
+                    <div class="sa-info" style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="avatar-placeholder"><%= sa.name.charAt(0).toUpperCase() %></div>
+                        <div>
+                            <h4 style="margin: 0; font-size: 1rem;"><%= sa.name %></h4>
+                            <span class="text-muted" style="font-size: 0.85rem;"><%= sa.email %></span>
+                        </div>
+                    </div>
+                    <div class="sa-actions">
+                        <button class="btn btn-sm btn-danger" onclick="removeSubAdmin('<%= sa._id %>')">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <p class="text-muted" style="padding: 1.5rem;">No Sub-Admins created yet.</p>
+        <% } %>
+    </div>
+</div>
+<% } %>
+
+<!-- Pending Approvals -->
+<% if (typeof pendingBuyers !== 'undefined' && pendingBuyers.length > 0) { %>
+<div class="card">
+    <div class="card-header">
+        <h2><i class="fas fa-clock"></i> Pending Self-Registrations</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Shop Name</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% pendingBuyers.forEach(function(buyer) { %>
+                    <tr>
+                        <td><strong><%= buyer.name %></strong></td>
+                        <td><%= buyer.email %></td>
+                        <td><%= buyer.shopName %></td>
+                        <td><%= new Date(buyer.createdAt).toLocaleDateString() %></td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="approveBuyer('<%= buyer._id %>')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="rejectBuyer('<%= buyer._id %>')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
+
+<!-- All Buyers Table -->
+<div class="card">
+    <div class="card-header">
+        <h2>All Buyers</h2>
+        <div class="search-box inline">
+            <i class="fas fa-search"></i>
+            <input type="text" id="buyerSearch" placeholder="Search buyers..." onkeyup="searchBuyers()">
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="buyersTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Shop</th>
+                    <th>Subscription</th>
+                    <th>Status</th>
+                    <th>Products</th>
+                    <th>Employees</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (typeof buyers !== 'undefined' && buyers.length > 0) { %>
+                    <% buyers.forEach(function(buyer) { %>
+                        <tr data-name="<%= buyer.name.toLowerCase() %>">
+                            <td>
+                                <div class="user-cell">
+                                    <div class="avatar-placeholder small"><%= buyer.name.charAt(0).toUpperCase() %></div>
+                                    <strong><%= buyer.name %></strong>
+                                </div>
+                            </td>
+                            <td><%= buyer.email %></td>
+                            <td><%= buyer.shopName %></td>
+                            <td>
+                                <span class="sub-badge <%= buyer.subscriptionActive ? 'active' : 'expired' %>">
+                                    <%= buyer.subscriptionActive ? 'Active' : 'Expired' %>
+                                </span>
+                                <% if (buyer.subscriptionExpiry) { %>
+                                    <br><small class="text-muted"><%= new Date(buyer.subscriptionExpiry).toLocaleDateString() %></small>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span class="status-badge status-<%= buyer.isBlocked ? 'blocked' : buyer.isApproved ? 'active' : 'pending' %>">
+                                    <%= buyer.isBlocked ? 'Blocked' : buyer.isApproved ? 'Active' : 'Pending' %>
+                                </span>
+                            </td>
+                            <td><%= buyer.productCount || 0 %></td>
+                            <td><%= buyer.employeeCount || 0 %> / 10</td>
+                            <td>
+    <div class="action-btns">
+        <% if (buyer.isBlocked) { %>
+            <button class="btn btn-sm btn-success" onclick="unblockBuyer('<%= buyer._id %>')" title="Unblock">
+                <i class="fas fa-unlock"></i>
+            </button>
+        <% } else { %>
+            <button class="btn btn-sm btn-warning" onclick="blockBuyer('<%= buyer._id %>', '<%= buyer.name %>')" title="Block">
+                <i class="fas fa-ban"></i>
+            </button>
+        <% } %>
+        
+        <button class="btn btn-sm btn-outline btn-manage-sub"
+    data-id="<%= buyer._id %>"
+    data-plan="<%= buyer.subscriptionPlan || 'monthly' %>"
+    data-active="<%= buyer.subscriptionActive %>"
+    data-expiry="<%= buyer.subscriptionExpiry ? new Date(buyer.subscriptionExpiry).toISOString().split('T')[0] : '' %>"
+    title="Manage Premium / Subscription">
+    <i class="fas fa-crown" style="color: #f59e0b;"></i>
+</button>
+        
+        <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
+            <button class="btn btn-sm btn-danger" onclick="deleteBuyer('<%= buyer._id %>', '<%= buyer.name %>')" title="Delete">
+                <i class="fas fa-trash"></i>
+            </button>
+        <% } %>
+    </div>
+</td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr><td colspan="8" class="empty-state">No buyers registered yet</td></tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add Buyer -->
+<div class="modal" id="addBuyerModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-plus"></i> Add New Buyer</h2>
+            <button class="modal-close" onclick="closeModal('addBuyerModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="addBuyerForm">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" name="name" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" name="email" required placeholder="buyer@shop.com">
+                </div>
+                <div class="form-group">
+                    <label>Shop / Business Name *</label>
+                    <input type="text" name="shopName" required placeholder="John's Electronics">
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" name="password" required minlength="6" placeholder="Account password">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Subscription Plan</label>
+                        <select name="plan" class="form-select">
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Preferred Currency</label>
+                        <select name="currency" class="form-select">
+                            <option value="USD">USD ($)</option>
+                            <option value="PKR">PKR (Rs)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="INR">INR (₹)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="AED">AED (د.إ)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('addBuyerModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Buyer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Sub Admin -->
+<div class="modal" id="subAdminModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-user-shield"></i> Add Sub Admin</h2>
+            <button class="modal-close" onclick="closeModal('subAdminModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="subAdminForm">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" name="name" required placeholder="Assistant Admin">
+                </div>
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" name="email" required placeholder="subadmin@babar.com">
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" name="password" required minlength="6" placeholder="Password">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('subAdminModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Create Sub-Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Subscription & Expiry -->
+<div class="modal" id="subscriptionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-crown" style="color: #f59e0b;"></i> Manage Premium Subscription</h2>
+            <button class="modal-close" onclick="closeModal('subscriptionModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="subscriptionForm">
+                <input type="hidden" id="subBuyerId" name="buyerId">
+                
+                <div class="form-group">
+                    <label>Subscription Plan</label>
+                    <select name="plan" class="form-select" id="subPlan">
+                        <option value="monthly">Monthly Plan</option>
+                        <option value="yearly">Yearly Plan</option>
+                        <option value="lifetime">Lifetime Access</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-select" id="subStatus">
+                        <option value="active">Active (Full Access)</option>
+                        <option value="expired">Expired (Read-Only Mode)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Expiration Date</label>
+                    <input type="date" name="expiresAt" id="subExpiry" class="form-input" required>
+                </div>
+
+                <!-- Quick Extend Shortcuts -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">Quick Extensions:</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" class="btn btn-sm btn-outline" onclick="addMonthsToExpiry(1)">+1 Month</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="addMonthsToExpiry(3)">+3 Months</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="addMonthsToExpiry(12)">+1 Year</button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('subscriptionModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Subscription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Open Add Buyer Modal
+    const openBuyerBtn = document.getElementById('openBuyerBtn');
+    if (openBuyerBtn) {
+        openBuyerBtn.addEventListener('click', function () {
+            document.getElementById('addBuyerModal').classList.add('active');
+        });
+    }
+
+    // Open Add Sub Admin Modal
+    const openSubAdminBtn = document.getElementById('openSubAdminBtn');
+    if (openSubAdminBtn) {
+        openSubAdminBtn.addEventListener('click', function () {
+            document.getElementById('subAdminModal').classList.add('active');
+        });
+    }
+
+    // Add Buyer Form
+    const addBuyerForm = document.getElementById('addBuyerForm');
+    if (addBuyerForm) {
+        addBuyerForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(this));
+
+            try {
+                const res = await fetch('/admin/buyers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    showToast('Buyer added successfully!', 'success');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(result.message || 'Error adding buyer', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to connect to server', 'error');
+            }
+        });
+    }
+
+    // Add Sub Admin Form
+    const subAdminForm = document.getElementById('subAdminForm');
+    if (subAdminForm) {
+        subAdminForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(this));
+
+            try {
+                const res = await fetch('/admin/subadmins', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    showToast('Sub-Admin created successfully!', 'success');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(result.message || 'Error creating sub-admin', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to connect to server', 'error');
+            }
+        });
+    }
+
+    // Subscription Form Submit
+    const subscriptionForm = document.getElementById('subscriptionForm');
+    if (subscriptionForm) {
+        subscriptionForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const buyerId = document.getElementById('subBuyerId').value;
+            const plan = document.getElementById('subPlan').value;
+            const status = document.getElementById('subStatus').value;
+            const expiresAt = document.getElementById('subExpiry').value;
+
+            try {
+                const res = await fetch('/admin/buyers/' + buyerId + '/subscription', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan, status, expiresAt })
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    showToast(result.message || 'Subscription updated!', 'success');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(result.message || 'Error updating subscription', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to update subscription', 'error');
+            }
+        });
+    }
+
+    // Crown buttons using data attributes
+    document.querySelectorAll('.btn-manage-sub').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const buyerId = this.getAttribute('data-id');
+            const plan = this.getAttribute('data-plan') || 'monthly';
+            const isActive = this.getAttribute('data-active');
+            const expiryDate = this.getAttribute('data-expiry') || '';
+
+            openSubscriptionModal(buyerId, plan, isActive, expiryDate);
+        });
+    });
+});
+
+// Close any modal
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+}
+
+// Search buyers
+function searchBuyers() {
+    const search = document.getElementById('buyerSearch').value.toLowerCase();
+    document.querySelectorAll('#buyersTable tbody tr').forEach(function (row) {
+        const name = row.getAttribute('data-name') || '';
+        row.style.display = name.includes(search) ? '' : 'none';
+    });
+}
+
+// Format date as YYYY-MM-DD
+function formatDateInput(dateObj) {
+    const yr = dateObj.getFullYear();
+    const mo = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dy = String(dateObj.getDate()).padStart(2, '0');
+    return yr + '-' + mo + '-' + dy;
+}
+
+// Open subscription modal
+function openSubscriptionModal(buyerId, plan, isActive, expiryDateStr) {
+    document.getElementById('subBuyerId').value = buyerId;
+    document.getElementById('subPlan').value = plan || 'monthly';
+    document.getElementById('subStatus').value = (isActive === 'true' || isActive === true) ? 'active' : 'expired';
+
+    const expiryInput = document.getElementById('subExpiry');
+
+    if (expiryDateStr && expiryDateStr !== 'null' && expiryDateStr !== 'undefined' && expiryDateStr !== '') {
+        // Handle both "2026-09-22" and full ISO strings
+        const clean = expiryDateStr.includes('T') ? expiryDateStr.split('T')[0] : expiryDateStr;
+        expiryInput.value = clean;
+    } else {
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        expiryInput.value = formatDateInput(d);
+    }
+
+    document.getElementById('subscriptionModal').classList.add('active');
+}
+
+// Keep old name as fallback
+function manageSubscription(buyerId, plan, isActive, expiryDateStr) {
+    openSubscriptionModal(buyerId, plan, isActive, expiryDateStr);
+}
+
+// +1 Month / +3 Months / +1 Year buttons
+function addMonthsToExpiry(months) {
+    const expiryInput = document.getElementById('subExpiry');
+    let baseDate = new Date();
+
+    if (expiryInput.value) {
+        // Parse as local noon to avoid timezone shift
+        const parsed = new Date(expiryInput.value + 'T12:00:00');
+        if (!isNaN(parsed.getTime()) && parsed > new Date()) {
+            baseDate = parsed;
+        }
+    }
+
+    baseDate.setMonth(baseDate.getMonth() + Number(months));
+    expiryInput.value = formatDateInput(baseDate);
+
+    // Always flip to Active when extending
+    document.getElementById('subStatus').value = 'active';
+}
+
+// Admin actions
+async function approveBuyer(id) {
+    await adminAction('/admin/buyers/' + id + '/approve', 'POST', 'Buyer approved!');
+}
+
+async function rejectBuyer(id) {
+    if (!confirm('Reject this registration?')) return;
+    await adminAction('/admin/buyers/' + id + '/reject', 'POST', 'Buyer rejected');
+}
+
+async function blockBuyer(id, name) {
+    if (!confirm('Block "' + name + '"? They will lose access to the dashboard.')) return;
+    await adminAction('/admin/buyers/' + id + '/block', 'POST', 'Buyer blocked!');
+}
+
+async function unblockBuyer(id) {
+    await adminAction('/admin/buyers/' + id + '/unblock', 'POST', 'Buyer unblocked!');
+}
+
+async function deleteBuyer(id, name) {
+    if (!confirm('Permanently delete "' + name + '" and ALL their sales data? This cannot be undone!')) return;
+    await adminAction('/admin/buyers/' + id, 'DELETE', 'Buyer deleted!');
+}
+
+async function removeSubAdmin(id) {
+    if (!confirm('Remove this Sub-Admin?')) return;
+    await adminAction('/admin/subadmins/' + id, 'DELETE', 'Sub-Admin removed!');
+}
+
+async function adminAction(url, method, successMsg) {
+    try {
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            showToast(successMsg, 'success');
+            setTimeout(() => location.reload(), 800);
+        } else {
+            showToast(result.message || 'Error', 'error');
+        }
+    } catch (err) {
+        showToast('Action failed', 'error');
+    }
+}
+</script>

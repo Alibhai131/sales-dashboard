@@ -7,30 +7,34 @@ dotenv.config();
 
 const createSuperAdmin = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/sales_dashboard');
-        
-        const existingAdmin = await User.findOne({ email: 'admin@dashboard.com' });
-        if (existingAdmin) {
-            console.log('Super Admin already exists!');
-            process.exit();
-        }
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('Connected to MongoDB...');
 
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        const admin = new User({
-            name: 'Super Admin',
-            email: 'admin@dashboard.com',
-            password: hashedPassword,
+        // Delete any existing superadmins to start fresh
+        await User.deleteMany({ role: 'superadmin' });
+
+        const superAdminData = {
+            name: 'Qasim Shahbaz',         // <-- Your Name
+            email: 'qasim@dashboard.com',  // <-- Your New Login Email
+            password: 'MySecurePassword123!', // <-- Your New Password
+            shopName: 'Main Headquarters',
             role: 'superadmin',
-            status: 'active'
-        });
+            isApproved: true,
+            isBlocked: false,
+            currency: 'USD'
+        };
 
-        await admin.save();
+        const salt = await bcrypt.genSalt(10);
+        superAdminData.password = await bcrypt.hash(superAdminData.password, salt);
+
+        await User.create(superAdminData);
         console.log('✅ Super Admin created successfully!');
-        console.log('Email: admin@dashboard.com');
-        console.log('Password: admin123');
-        process.exit();
-    } catch (err) {
-        console.error(err);
+        console.log(`   Email: qasim@dashboard.com`);
+        console.log(`   Password: MySecurePassword123!`);
+
+        process.exit(0);
+    } catch (error) {
+        console.error('❌ Error:', error.message);
         process.exit(1);
     }
 };

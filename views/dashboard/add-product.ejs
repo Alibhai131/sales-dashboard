@@ -1,0 +1,118 @@
+<div class="card" style="max-width: 720px; margin: 0 auto;">
+    <div class="card-header">
+        <h2><i class="fas fa-plus-circle"></i> Add New Product</h2>
+    </div>
+    <div style="padding: 2rem;">
+        <form id="addProductForm">
+            <div class="form-group">
+                <label>Product Name *</label>
+                <input type="text" name="name" id="name" required placeholder="e.g. Mini USB Cable">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>SKU / Product Number</label>
+                    <input type="text" name="sku" id="sku" placeholder="e.g. USB-001">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" name="category" id="category" placeholder="e.g. Electronics" value="General">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Investment / Cost Price *</label>
+                    <input type="number" name="costPrice" id="costPrice" step="0.01" min="0" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Selling Price *</label>
+                    <input type="number" name="sellingPrice" id="sellingPrice" step="0.01" min="0" required placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Stock Quantity</label>
+                <input type="number" name="stock" id="stock" min="0" value="10" placeholder="10">
+            </div>
+
+            <!-- Live Profit Preview -->
+            <div id="profitPreview" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; display: none;">
+                <strong style="color: #16a34a;">Profit Preview:</strong>
+                <span id="previewText" style="margin-left: 0.5rem;"></span>
+            </div>
+
+            <div class="form-actions">
+                <a href="/products" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary" id="saveBtn">
+                    <i class="fas fa-save"></i> Save Product
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const costInput = document.getElementById('costPrice');
+    const sellInput = document.getElementById('sellingPrice');
+    const preview = document.getElementById('profitPreview');
+    const previewText = document.getElementById('previewText');
+
+    function updatePreview() {
+        const cost = parseFloat(costInput.value) || 0;
+        const sell = parseFloat(sellInput.value) || 0;
+        if (cost > 0 || sell > 0) {
+            const profit = sell - cost;
+            const margin = sell > 0 ? ((profit / sell) * 100).toFixed(1) : 0;
+            const roi = cost > 0 ? ((profit / cost) * 100).toFixed(1) : 0;
+            preview.style.display = 'block';
+            previewText.innerHTML = `Profit: <b>${profit.toFixed(2)}</b> &nbsp;|&nbsp; Margin: <b>${margin}%</b> &nbsp;|&nbsp; ROI: <b>${roi}%</b>`;
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    costInput.addEventListener('input', updatePreview);
+    sellInput.addEventListener('input', updatePreview);
+
+    // Submit form
+    document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        const data = {
+            name: document.getElementById('name').value,
+            sku: document.getElementById('sku').value,
+            category: document.getElementById('category').value,
+            costPrice: document.getElementById('costPrice').value,
+            sellingPrice: document.getElementById('sellingPrice').value,
+            stock: document.getElementById('stock').value
+        };
+
+        try {
+            const res = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                showToast('Product saved successfully!', 'success');
+                setTimeout(() => window.location.href = '/products', 800);
+            } else {
+                showToast(result.message || 'Failed to save', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Product';
+            }
+        } catch (err) {
+            showToast('Network error. Try again.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Product';
+        }
+    });
+});
+</script>

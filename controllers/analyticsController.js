@@ -1,53 +1,135 @@
 const Sale = require('../models/Sale');
+const Product = require('../models/Product');
+const Employee = require('../models/Employee');
 
 exports.getAnalytics = async (req, res) => {
-    try {
-        const userId = req.session.user.id;
-        const sales = await Sale.find({ buyerId: userId }).sort({ createdAt: 1 });
+  try {
+    const userId = req.session.user._id;
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1);
 
-        // Group sales by month for the current year
-        const monthlyData = {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            sales: new Array(12).fill(0),
-            profit: new Array(12).fill(0),
-            investment: new Array(12).fill(0)
-        };
+    // Monthly breakdown
+    const monthlySales = await Sale.aggregate([
+      { $match: { userId: userId, saleDate: { $gte: yearStart } } },
+      {
+        $group: {
+          _id: { month: { $month: '$saleDate' } },
+          revenue: { $sum: '$totalRevenue' },
+          profit: { $sum: '$profit' },
+          cost: { $sum: '$totalCost' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id.month': 1 } }
+    ]);
 
-        const currentYear = new Date().getFullYear();
+    // Top products
+    const topProducts = await Sale.aggregate([
+      { $match: { userId: userId } },
+      {
+        $group: {
+          _id: '$productName',
+          totalRevenue: { $sum: '$totalRevenue' },
+          totalProfit: { $sum: '$profit' },
+          totalQuantity: { $sum: '$quantity' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { totalRevenue: -1 } },
+      { $limit: 10 }
+    ]);
 
-        sales.forEach(sale => {
-            const saleDate = new Date(sale.createdAt);
-            if (saleDate.getFullYear() === currentYear) {
-                const month = saleDate.getMonth();
-                monthlyData.sales[month] += sale.totalSales || 0;
-                monthlyData.profit[month] += sale.profit || 0;
-                monthlyData.investment[month] += sale.totalInvestment || 0;
-            }
-        });
+    // Sales by type
+    const salesByType = await Sale.aggregate([
+      { $match: { userId: userId } },
+      {
+        $group: {
+          _id: '$saleType',
+          revenue: { $sum: '$totalRevenue' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
 
-        // Calculate best selling products
-        const productMap = {};
-        sales.forEach(sale => {
-            if (!productMap[sale.productName]) {
-                productMap[sale.productName] = { count: 0, revenue: 0 };
-            }
-            productMap[sale.productName].count += sale.quantity;
-            productMap[sale.productName].revenue += sale.totalSales;
-        });
+    // Employee performance
+    const employeePerformance = await Sale.aggregate([
+      { $match: { userId: userId, employeeId: { $ne: null } } },
+      {
+        $group: {
+          _id: '$employeeId',
+          totalRevenue: { $sum: '$totalRevenue' },
+          totalProfit: { $sum: '$profit' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { totalRevenue: -1 } }
+    ]);
 
-        const topProducts = Object.entries(productMap)
-            .map(([name, data]) => ({ name, ...data }))
-            .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, 5);
-
-        res.render('dashboard/analytics', {
-            user: req.session.user,
-            monthlyData: JSON.stringify(monthlyData),
-            topProducts,
-            year: currentYear
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Analytics Error');
+    // Populate employee names
+    const Employee = require('../models/Employee');
+    for (let ep of employeePerformance) {
+      const emp = await Employee.findById(ep._id);
+      ep.name = emp ? emp.name : 'Unknown';
     }
+
+    // Daily sales for last 30 days
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const dailySales = await Sale.aggregate([
+      { $match: { userId: userId, saleDate: { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$saleDate' } },
+          revenue: { $sum: '$totalRevenue' },
+          profit: { $sum: '$profit' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Overall stats
+    const overallStats = await Sale.aggregate([
+      { $match: { userId: userId } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$totalRevenue' },
+          totalProfit: { $sum: '$profit' },
+          totalCost: { $sum: '$totalCost' },
+          avgMargin: { $avg: '$profitMargin' },
+          avgROI: { $avg: '$roi' },
+          totalSales: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Payment status
+    const paymentStats = await Sale.aggregate([
+      { $match: { userId: userId } },
+      {
+        $group: {
+          _id: '$paymentStatus',
+          count: { $sum: 1 },
+          revenue: { $sum: '$totalRevenue' }
+        }
+      }
+    ]);
+
+    res.render('dashboard/analytics', {
+      title: 'Analytics',
+      monthlySales,
+      topProducts,
+      salesByType,
+      employeePerformance,
+      dailySales,
+      overallStats: overallStats.length > 0 ? overallStats[0] : {},
+      paymentStats,
+      user: req.session.user,
+      readOnly: res.locals.readOnly || false
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    req.flash('error_msg', 'Error loading analytics');
+    res.redirect('/dashboard');
+  }
 };

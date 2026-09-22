@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'Sales Dashboard' %></title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="<%= typeof theme !== 'undefined' ? theme : 'light' %>">
+    
+    <div class="app-container">
+        <% if (typeof showSidebar === 'undefined' || showSidebar !== false) { %>
+            <%- include('../partials/sidebar') %>
+        <% } %>
+        
+        <main class="main-content">
+            <% if (typeof showHeader === 'undefined' || showHeader !== false) { %>
+                <%- include('../partials/header') %>
+            <% } %>
+            
+            <!-- Flash Messages -->
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success" id="flashMessage">
+                    <i class="fas fa-check-circle"></i>
+                    <span><%= success %></span>
+                    <button class="alert-close" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            <% } %>
+            
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-error" id="flashMessage">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span><%= error %></span>
+                    <button class="alert-close" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            <% } %>
+            
+            <div class="page-content">
+                <%- body %>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Notification Bell Dropdown -->
+    <%- include('../partials/notification-dropdown') %>
+    
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Main JS -->
+    <script src="/js/app.js"></script>
+    <% if (typeof extraScripts !== 'undefined') { %>
+        <%- extraScripts %>
+    <% } %>
+</body>
+</html>

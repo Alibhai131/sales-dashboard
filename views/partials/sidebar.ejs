@@ -1,0 +1,105 @@
+<aside class="sidebar" id="sidebar">
+    <!-- Logo -->
+<div class="sidebar-logo">
+    <span class="logo-icon">
+        <% if (typeof user !== 'undefined' && user.role === 'buyer' && user.shopName) { %>
+            <%= user.shopName.charAt(0).toUpperCase() %>
+        <% } else { %>
+            <i class="fas fa-chart-pie"></i>
+        <% } %>
+    </span>
+
+    <span class="logo-text" style="color: var(--primary); font-size: 1.05rem; line-height: 1.2;">
+        <% if (typeof user !== 'undefined' && user.role === 'buyer' && user.shopName) { %>
+            <%= user.shopName.toUpperCase() %>
+        <% } else { %>
+            SALES DASHBOARD
+        <% } %>
+    </span>
+
+    <button class="sidebar-close-btn" id="sidebarCloseBtn">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+    
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="/dashboard" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            
+            <% if (typeof user !== 'undefined' && (user.role === 'superadmin' || user.role === 'subadmin')) { %>
+            <li class="nav-item">
+                <a href="/admin/buyers" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'customers' ? 'active' : '' %>">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                </a>
+            </li>
+            <% } %>
+            
+            <li class="nav-item">
+                <a href="/dashboard/analytics" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'analytics' ? 'active' : '' %>">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/dashboard/notifications" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'messages' ? 'active' : '' %>">
+                    <i class="fas fa-envelope"></i>
+                    <span>Messages</span>
+                    <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
+                        <span class="nav-badge"><%= unreadCount %></span>
+                    <% } %>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/products" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'products' ? 'active' : '' %>">
+                    <i class="fas fa-box"></i>
+                    <span>Products</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/reports" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'reports' ? 'active' : '' %>">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/settings" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'settings' ? 'active' : '' %>">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/products/add" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'addproduct' ? 'active' : '' %>">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Product</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/dashboard/employees" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'employees' ? 'active' : '' %>">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Employees</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    
+    <!-- Logout -->
+    <div class="sidebar-footer">
+        <a href="/auth/logout" class="nav-link logout-link">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>

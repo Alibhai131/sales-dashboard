@@ -1,107 +1,229 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Sales Dashboard</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .settings-card {
-            background: var(--color-white);
-            padding: 1.8rem;
-            border-radius: var(--card-border-radius);
-            box-shadow: var(--box-shadow);
-            margin-top: 1.5rem;
-        }
-        .form-group { margin-bottom: 1.2rem; }
-        .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 500; }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: var(--border-radius-1);
-            background: var(--color-light);
-            color: var(--color-dark);
-            border: none;
-        }
-        .btn-save {
-            background: var(--color-primary);
-            color: white;
-            padding: 0.8rem 1.8rem;
-            border-radius: var(--border-radius-1);
-            cursor: pointer;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <div class="container" style="grid-template-columns: 14rem auto;">
-        <aside id="aside-bar">
-            <div class="top"><div class="logo"><i class="fa-solid fa-chart-line primary" style="font-size:1.6rem;"></i><h2>SALES<span class="danger">PRO</span></h2></div></div>
-            <div class="sidebar">
-                <a href="/dashboard"><i class="fa-solid fa-grid-2"></i><h3>Dashboard</h3></a>
-                <a href="/employees"><i class="fa-solid fa-users"></i><h3>Workers</h3></a>
-                <a href="/analytics"><i class="fa-solid fa-chart-line"></i><h3>Analytics</h3></a>
-                <a href="/products"><i class="fa-solid fa-box-open"></i><h3>Products</h3></a>
-                <a href="/reports"><i class="fa-solid fa-file-invoice"></i><h3>PDF Reports</h3></a>
-                <a href="/settings" class="active"><i class="fa-solid fa-gear"></i><h3>Settings</h3></a>
-                <a href="/auth/logout"><i class="fa-solid fa-right-from-bracket"></i><h3>Logout</h3></a>
-            </div>
-        </aside>
+<% 
+    var activePage = 'settings'; 
+    var pageTitle = 'Settings';
+    var title = 'Settings - Sales Dashboard';
+%>
 
-        <main>
-            <h1>Account Settings</h1>
-
-            <% if(error) { %>
-                <div style="background: var(--color-danger); color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem;"><%= error %></div>
-            <% } %>
-            <% if(success) { %>
-                <div style="background: var(--color-success); color: black; padding: 1rem; border-radius: 8px; margin-top: 1rem; font-weight: bold;"><%= success %></div>
-            <% } %>
-
-            <!-- PROFILE & CURRENCY -->
-            <div class="settings-card">
-                <h2><i class="fa-solid fa-user-gear primary"></i> Profile & Multi-Currency Settings</h2>
-                <form action="/settings/profile" method="POST" style="margin-top: 1rem;">
-                    <div class="form-group">
-                        <label>Business Name / Full Name</label>
-                        <input type="text" name="name" value="<%= fullUser.name %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Dashboard Currency</label>
-                        <select name="currency">
-                            <option value="USD" <%= fullUser.currency === 'USD' ? 'selected' : '' %>>USD ($)</option>
-                            <option value="GBP" <%= fullUser.currency === 'GBP' ? 'selected' : '' %>>GBP (£)</option>
-                            <option value="PKR" <%= fullUser.currency === 'PKR' ? 'selected' : '' %>>PKR (Rs)</option>
-                            <option value="INR" <%= fullUser.currency === 'INR' ? 'selected' : '' %>>INR (₹)</option>
-                            <option value="EUR" <%= fullUser.currency === 'EUR' ? 'selected' : '' %>>EUR (€)</option>
-                            <option value="AED" <%= fullUser.currency === 'AED' ? 'selected' : '' %>>AED (AED)</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-save">Save Profile Changes</button>
-                </form>
-            </div>
-
-            <!-- CHANGE PASSWORD -->
-            <div class="settings-card">
-                <h2><i class="fa-solid fa-key warning"></i> Security & Change Password</h2>
-                <form action="/settings/password" method="POST" style="margin-top: 1rem;">
-                    <div class="form-group">
-                        <label>Current Password</label>
-                        <input type="password" name="currentPassword" required placeholder="Enter current password">
-                    </div>
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" name="newPassword" required placeholder="Enter new password">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <input type="password" name="confirmPassword" required placeholder="Confirm new password">
-                    </div>
-                    <button type="submit" class="btn-save" style="background: var(--color-dark);">Update Password</button>
-                </form>
-            </div>
-        </main>
+<div class="settings-layout">
+    <!-- Settings Tabs (Left Column) -->
+    <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="profile">
+            <i class="fas fa-user"></i> <span>Profile</span>
+        </button>
+        <button class="settings-tab" data-tab="business">
+            <i class="fas fa-store"></i> <span>Business</span>
+        </button>
+        <button class="settings-tab" data-tab="currency">
+            <i class="fas fa-coins"></i> <span>Currency</span>
+        </button>
+        <button class="settings-tab" data-tab="notifications">
+            <i class="fas fa-bell"></i> <span>Notifications</span>
+        </button>
+        <button class="settings-tab" data-tab="security">
+            <i class="fas fa-shield-alt"></i> <span>Security</span>
+        </button>
+        <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
+        <button class="settings-tab" data-tab="subscription">
+            <i class="fas fa-crown"></i> <span>Subscription</span>
+        </button>
+        <% } %>
     </div>
-</body>
-</html>
+
+    <!-- Settings Content (Right Column) -->
+    <div class="settings-content">
+
+        <!-- Profile Panel -->
+        <div class="settings-panel active" id="panel-profile">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Profile Settings</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <form action="/settings/profile" method="POST">
+                        <div class="avatar-upload">
+                            <div class="avatar-preview">
+                                <div class="avatar-placeholder large">
+                                    <%= typeof user !== 'undefined' && user.name ? user.name.charAt(0).toUpperCase() : 'U' %>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-outline" disabled>
+                                    <i class="fas fa-camera"></i> Change Photo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" name="name" value="<%= typeof user !== 'undefined' ? user.name : '' %>" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" name="email" value="<%= typeof user !== 'undefined' ? user.email : '' %>" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" name="phone" value="<%= typeof user !== 'undefined' && user.phone ? user.phone : '' %>" placeholder="+92 300 1234567">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Panel -->
+        <div class="settings-panel" id="panel-business">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Business Settings</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <form action="/settings/business" method="POST">
+                        <div class="form-group">
+                            <label>Business / Shop Name</label>
+                            <input type="text" name="shopName" value="<%= typeof user !== 'undefined' && user.shopName ? user.shopName : '' %>" placeholder="e.g. Mian Ji Electronics">
+                        </div>
+                        <div class="form-group">
+                            <label>Business Address</label>
+                            <textarea name="address" rows="3" placeholder="Enter shop address"><%= typeof user !== 'undefined' && user.address ? user.address : '' %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Business Type</label>
+                            <select name="businessType" class="form-select">
+                                <option value="retail" <%= typeof user !== 'undefined' && user.businessType === 'retail' ? 'selected' : '' %>>Retail Shop</option>
+                                <option value="wholesale" <%= typeof user !== 'undefined' && user.businessType === 'wholesale' ? 'selected' : '' %>>Wholesale Business</option>
+                                <option value="ecommerce" <%= typeof user !== 'undefined' && user.businessType === 'ecommerce' ? 'selected' : '' %>>E-Commerce Store</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Business Info
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Currency Panel -->
+        <div class="settings-panel" id="panel-currency">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Currency Settings</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <form action="/settings/currency" method="POST">
+                        <div class="form-group">
+                            <label>Preferred Currency</label>
+                            <select name="currency" class="form-select">
+                                <option value="USD" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'USD') ? 'selected' : '' %>>$ USD - US Dollar</option>
+                                <option value="GBP" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'GBP') ? 'selected' : '' %>>£ GBP - British Pound</option>
+                                <option value="PKR" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'PKR') ? 'selected' : '' %>>Rs PKR - Pakistani Rupee</option>
+                                <option value="INR" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'INR') ? 'selected' : '' %>>₹ INR - Indian Rupee</option>
+                                <option value="EUR" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'EUR') ? 'selected' : '' %>>€ EUR - Euro</option>
+                                <option value="AED" <%= (typeof selectedCurrency !== 'undefined' && selectedCurrency === 'AED') ? 'selected' : '' %>>د.إ AED - UAE Dirham</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Currency
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="settings-panel" id="panel-notifications">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Notification Preferences</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <div class="toggle-setting">
+                        <div>
+                            <h4>New Sale Alerts</h4>
+                            <p class="text-muted">Receive pop-up notifications when a new sale is made</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-setting">
+                        <div>
+                            <h4>Low Stock Alerts</h4>
+                            <p class="text-muted">Get notified when product stock drops below 5 items</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Panel -->
+        <div class="settings-panel" id="panel-security">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Change Password</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <form action="/settings/password" method="POST">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" name="currentPassword" required placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" name="newPassword" required minlength="6" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm New Password</label>
+                            <input type="password" name="confirmPassword" required placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-lock"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscription Panel -->
+        <% if (typeof user !== 'undefined' && user.role === 'superadmin') { %>
+        <div class="settings-panel" id="panel-subscription">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Subscription Status</h2>
+                </div>
+                <div style="padding: 2rem;">
+                    <div class="sub-status active">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Super Admin - Lifetime Plan</span>
+                    </div>
+                    <p class="text-muted">You have full access to manage all buyers, sub-admins, and analytics.</p>
+                </div>
+            </div>
+        </div>
+        <% } %>
+
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            const panel = document.getElementById('panel-' + this.dataset.tab);
+            if (panel) panel.classList.add('active');
+        });
+    });
+</script>

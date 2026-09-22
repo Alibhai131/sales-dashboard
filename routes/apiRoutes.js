@@ -1,59 +1,89 @@
 const express = require('express');
 const router = express.Router();
+const { isAuthenticated } = require('../middleware/auth');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
-const User = require('../models/User');
+const Notification = require('../models/Notification');
 
-// Endpoint for E-Commerce webhooks: POST /api/webhook/sale
-router.post('/webhook/sale', async (req, res) => {
-    try {
-        const { buyerEmail, productName, costPrice, sellingPrice, quantity, paymentStatus } = req.body;
+// API: Get dashboard stats
+router.get('/stats', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user._id;
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        const user = await User.findOne({ email: buyerEmail });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'Buyer user not found' });
-        }
+    const todaySales = await Sale.aggregate([
+      { $match: { userId: userId, saleDate: { $gte: todayStart } } },
+      { $group: { _id: null, revenue: { $sum: '$totalRevenue' }, profit: { $sum: '$profit' }, count: { $sum: 1 } } }
+    ]);
 
-        if (user.status === 'blocked') {
-            return res.status(403).json({ success: false, message: 'Buyer subscription blocked' });
-        }
+    const unreadNotifications = await Notification.countDocuments({ userId, read: false });
 
-        const qty = parseInt(quantity) || 1;
-        const cost = parseFloat(costPrice) || 0;
-        const selling = parseFloat(sellingPrice) || 0;
-        const totalInvestment = cost * qty;
-        const totalSales = selling * qty;
-        const profit = totalSales - totalInvestment;
+    res.json({
+      success: true,
+      today: todaySales.length > 0 ? todaySales[0] : { revenue: 0, profit: 0, count: 0 },
+      unreadNotifications
+    });
+  } catch (error) {
+    res.json({ success: false });
+  }
+});
 
-        const sale = new Sale({
-            buyerId: user._id,
-            productName: productName || 'Online Webhook Order',
-            costPrice: cost,
-            sellingPrice: selling,
-            quantity: qty,
-            totalInvestment,
-            totalSales,
-            profit,
-            profitMarginPercentage: totalSales > 0 ? ((profit / totalSales) * 100).toFixed(2) : 0,
-            roiPercentage: totalInvestment > 0 ? ((profit / totalInvestment) * 100).toFixed(2) : 0,
-            currency: user.currency || 'USD',
-            source: 'ecommerce',
-            paymentStatus: paymentStatus || 'Paid'
-        });
+// API: Search products
+router.get('/products/search', isAuthenticated, async (req, res) => {
+  try {
+    const { q } = req.query;
+    const products = await Product.find({
+      userId: req.session.user._id,
+      name: { $regex: q, $options: 'i' },
+      isActive: true
+    }).limit(10);
+    res.json({ success: true, products });
+  } catch (error) {
+    res.json({ success: false, products: [] });
+  }
+});
 
-        await sale.save();
+// API: Get chart data
+router.get('/chart-data', isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.session.user._id;
+    const { period } = req.query;
+    
+    let startDate;
+    const now = new Date();
 
-        res.status(200).json({
-            success: true,
-            message: 'Sale recorded from E-Commerce platform!',
-            saleId: sale._id,
-            totalSales,
-            profit
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, error: err.message });
+    switch(period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
+
+    const data = await Sale.aggregate([
+      { $match: { userId: userId, saleDate: { $gte: startDate } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$saleDate' } },
+          revenue: { $sum: '$totalRevenue' },
+          profit: { $sum: '$profit' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.json({ success: true, data });
+  } catch (error) {
+    res.json({ success: false, data: [] });
+  }
 });
 
 module.exports = router;

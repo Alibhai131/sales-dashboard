@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const saleController = require('../controllers/saleController');
-const { ensureAuthenticated, checkSubscriptionStatus } = require('../middleware/auth');
 
-router.post('/add', ensureAuthenticated, checkSubscriptionStatus, saleController.postRecordSale);
+const { isAuthenticated } = require('../middleware/auth');
+const saleController = require('../controllers/saleController');
+
+router.use(isAuthenticated);
+
+router.post('/', saleController.createSale);
+router.get('/:id', saleController.getSaleById);
 
 module.exports = router;

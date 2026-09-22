@@ -1,34 +1,34 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true },
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
+    shopName: { type: String, default: '', trim: true },
+    phone: { type: String, default: '', trim: true },
+    address: { type: String, default: '' },
+    businessType: { type: String, default: 'retail' },
     role: { 
         type: String, 
         enum: ['superadmin', 'subadmin', 'buyer'], 
         default: 'buyer' 
     },
-    status: { 
-        type: String, 
-        enum: ['pending', 'active', 'blocked', 'read_only'], 
-        default: 'pending' // Buyers require admin approval upon registration
-    },
-    currency: { 
-        type: String, 
-        enum: ['USD', 'GBP', 'PKR', 'INR', 'EUR', 'AED'], 
-        default: 'USD' 
-    },
-    subscriptionStatus: {
-        type: String,
-        enum: ['active', 'expired', 'blocked'],
-        default: 'active'
-    },
-    subscriptionDueDate: { type: Date },
-    maxEmployees: { type: Number, default: 10 }, // Limit to 10 workers per buyer
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    currency: { type: String, default: 'USD' },
+    isApproved: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
+    
+    // Subscription
+    subscriptionActive: { type: Boolean, default: true },
+    subscriptionPlan: { type: String, default: 'monthly' },
+    subscriptionExpiry: { type: Date },
+    paymentStatus: { type: String, default: 'paid' },
+    
+    employeeLimit: { type: Number, default: 10 },
+    
     resetPasswordToken: String,
-    resetPasswordExpire: Date
-}, { timestamps: true });
+    resetPasswordExpires: Date,
+    
+    createdAt: { type: Date, default: Date.now }
+});
 
-module.exports = mongoose.models.User || mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema);

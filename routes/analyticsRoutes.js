@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { isAuthenticated } = require('../middleware/auth');
+const { subscriptionCheck } = require('../middleware/subscriptionCheck');
 const analyticsController = require('../controllers/analyticsController');
-const { ensureAuthenticated, checkSubscriptionStatus } = require('../middleware/auth');
 
-router.get('/', ensureAuthenticated, checkSubscriptionStatus, analyticsController.getAnalytics);
+router.get('/', isAuthenticated, subscriptionCheck, analyticsController.getAnalytics);
 
 module.exports = router;
