@@ -5,13 +5,12 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const expressLayouts = require('express-ejs-layouts');
-const connectDB = require('./config/db');
 
 dotenv.config();
 
 const app = express();
 
-// Trust Vercel Reverse Proxy (CRITICAL for HTTPS Sessions on Vercel)
+// Trust Vercel Reverse Proxy
 app.set('trust proxy', 1);
 
 // Body Parser Middleware
@@ -19,41 +18,41 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Connect MongoDB
-connectDB();
+// Session Configuration
+const sessionSecret = process.env.JWT_SECRET || 'sales_dashboard_secret_key_2024';
+const mongoUri = process.env.MONGODB_URI;
 
-// Session Setup with MongoStore
-if (process.env.MONGODB_URI) {
+const sessionConfig = {
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
+    }
+};
+
+if (mongoUri) {
     sessionConfig.store = MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
+        mongoUrl: mongoUri,
         ttl: 14 * 24 * 60 * 60,
-        touchAfter: 24 * 3600 // Only update session DB once per 24 hours unless modified (3x Speed Boost!)
-    });
-}
-
-if (process.env.MONGODB_URI) {
-    sessionConfig.store = MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
-        ttl: 14 * 24 * 60 * 60
+        touchAfter: 24 * 3600
     });
 }
 
 app.use(session(sessionConfig));
 
-// Static Files Setup (Serves public/css/style.css reliably on local & Vercel)
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(process.cwd(), 'public')));
-
-// EJS View Engine & Layouts Setup
+// Static Files & View Engine Setup
+const rootDir = process.cwd();
+app.use(express.static(path.join(rootDir, 'public')));
 app.use(expressLayouts);
 app.set('layout', 'layouts/main');
 app.set('view engine', 'ejs');
+app.set('views', path.join(rootDir, 'views'));
 
-// Try both local and cwd views paths for serverless compatibility
-const viewsPath = path.join(process.cwd(), 'views');
-app.set('views', viewsPath);
-
-// Custom Middleware for User Locals & Currency
+// Custom Middleware for User & Currency Locals
 app.use((req, res, next) => {
     const sessionUser = (req.session && req.session.user) ? req.session.user : null;
     res.locals.user = sessionUser;
