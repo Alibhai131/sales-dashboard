@@ -16,35 +16,39 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Connect DB for local development
-if (!process.env.VERCEL) {
-    connectDB();
-}
+// Connect DB (Handles Serverless Cold-Starts)
+connectDB();
 
-// Session Setup
-app.use(session({
+// Session Setup with MongoStore
+const sessionConfig = {
     secret: process.env.JWT_SECRET || 'sales_dashboard_secret_key_2024',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI,
-        ttl: 14 * 24 * 60 * 60
-    }),
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 14 * 24 * 60 * 60 * 1000
+        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
     }
-}));
+};
 
-// Static & View Engine Setup (Vercel Serverless Compatible)
-app.use(express.static(path.join(process.cwd(), 'public')));
+if (process.env.MONGODB_URI) {
+    sessionConfig.store = MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        ttl: 14 * 24 * 60 * 60
+    });
+}
+
+app.use(session(sessionConfig));
+
+// Static & View Engine Setup (Vercel Compatible)
+const rootDir = process.cwd();
+app.use(express.static(path.join(rootDir, 'public')));
 app.use(expressLayouts);
 app.set('layout', 'layouts/main');
 app.set('view engine', 'ejs');
-app.set('views', path.join(process.cwd(), 'views'));
+app.set('views', path.join(rootDir, 'views'));
 
-// Custom Locals Middleware
+// Custom Middleware for User Locals & Currency
 app.use((req, res, next) => {
     const sessionUser = (req.session && req.session.user) ? req.session.user : null;
     res.locals.user = sessionUser;
@@ -100,10 +104,10 @@ app.use((req, res) => {
     });
 });
 
-// Error Handler
+// Global Error Handler
 app.use((err, req, res, next) => {
     console.error('Server Error:', err);
-    res.status(500).send('Server Error: ' + err.message);
+    res.status(500).send('Internal Server Error: ' + err.message);
 });
 
 // Start Server locally
