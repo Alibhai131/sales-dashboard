@@ -11,12 +11,15 @@ dotenv.config();
 
 const app = express();
 
+// Trust Vercel Reverse Proxy (CRITICAL for HTTPS Sessions on Vercel)
+app.set('trust proxy', 1);
+
 // Body Parser Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Connect DB (Handles Serverless Cold-Starts)
+// Connect MongoDB
 connectDB();
 
 // Session Setup with MongoStore
@@ -27,6 +30,7 @@ const sessionConfig = {
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
+        sameSite: 'lax',
         maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
     }
 };
@@ -40,13 +44,18 @@ if (process.env.MONGODB_URI) {
 
 app.use(session(sessionConfig));
 
-// Static & View Engine Setup (Vercel Compatible)
-const rootDir = process.cwd();
-app.use(express.static(path.join(rootDir, 'public')));
+// Static Files Setup (Serves public/css/style.css reliably on local & Vercel)
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(process.cwd(), 'public')));
+
+// EJS View Engine & Layouts Setup
 app.use(expressLayouts);
 app.set('layout', 'layouts/main');
 app.set('view engine', 'ejs');
-app.set('views', path.join(rootDir, 'views'));
+
+// Try both local and cwd views paths for serverless compatibility
+const viewsPath = path.join(process.cwd(), 'views');
+app.set('views', viewsPath);
 
 // Custom Middleware for User Locals & Currency
 app.use((req, res, next) => {
@@ -86,7 +95,7 @@ app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
-// Root redirect
+// Root Redirect
 app.get('/', (req, res) => {
     if (req.session && req.session.user) {
         return res.redirect('/dashboard');
