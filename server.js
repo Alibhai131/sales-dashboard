@@ -37,7 +37,8 @@ app.use(session({
 }));
 
 // Static Folder
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(process.cwd(), 'public')));
+app.set('views', path.join(process.cwd(), 'views'));
 
 // EJS View Engine & Layouts Setup
 app.use(expressLayouts);
